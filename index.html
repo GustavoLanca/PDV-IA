@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDV — Auditoria Visual de Gôndola</title>
+<style>
+  :root{
+    --bg:#f8fafc;
+    --surface:#ffffff;
+    --line:#e2e8f0;
+    --text:#0f172a;
+    --muted:#64748b;
+    --accent:#2563eb;
+    --accent-dark:#1d4ed8;
+    --accent-soft:#eff6ff;
+    --ok:#15803d;
+    --ok-bg:#f0fdf4;
+    --ok-line:#bbf7d0;
+    --warn:#b45309;
+    --warn-bg:#fffbeb;
+    --warn-line:#fde68a;
+    --no:#b91c1c;
+    --no-bg:#fef2f2;
+    --no-line:#fecaca;
+    --shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 12px rgba(15,23,42,.03);
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1080px;margin:0 auto;padding:28px 20px 64px}
+
+  /* Cabeçalho */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:16px 20px;margin-bottom:20px;box-shadow:var(--shadow);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:40px;height:40px;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+    color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;letter-spacing:.02em;flex:none;
+  }
+  h1{margin:0;font-size:20px;font-weight:750;letter-spacing:-.02em}
+  .subtitle{margin:2px 0 0;color:var(--muted);font-size:12px}
+  .top-actions{display:flex;align-items:center;gap:8px}
+
+  /* Navegação */
+  .tabs{
+    display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);
+    padding:5px;border-radius:12px;margin-bottom:22px;box-shadow:var(--shadow);width:fit-content;flex-wrap:wrap;
+  }
+  .tab{
+    border:0;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:600;
+    padding:8px 16px;border-radius:8px;cursor:pointer;transition:all .15s;
+  }
+  .tab:hover{color:var(--text);background:#f1f5f9}
+  .tab.active{color:#fff;background:var(--accent)}
+
+  /* Breadcrumb */
+  .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:14px}
+  .breadcrumb button{border:0;background:none;color:var(--accent-dark);font:inherit;font-weight:600;padding:0;cursor:pointer;text-decoration:underline}
+  .breadcrumb strong{color:var(--text)}
+
+  /* Painéis e Cabeçalhos */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow);margin-bottom:18px}
+  .bar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  h2{margin:0;font-size:16px;font-weight:700}
+  h3{margin:0 0 6px;font-size:15px;font-weight:700}
+  .sub{font-size:12px;color:var(--muted)}
+
+  /* Inputs */
+  input[type="text"],input[type="search"],input[type="date"],select,textarea{
+    border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);
+    padding:8px 11px;font:inherit;font-size:13px;outline:none;width:100%;transition:border-color .15s;
+  }
+  textarea{resize:vertical;min-height:84px}
+  input[type="text"]:focus,input[type="search"]:focus,input[type="date"]:focus,select:focus,textarea:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .field{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+
+  /* Range Sliders */
+  .range-wrap{display:flex;align-items:center;height:36px}
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:6px;margin:0;padding:0;border:0;
+    border-radius:999px;background:#e2e8f0;outline:none;cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--accent);border:2px solid #fff;
+    box-shadow:0 1px 4px rgba(15,23,42,.3);cursor:pointer;transition:transform .1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.12)}
+  input[type="range"]::-moz-range-thumb{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--accent);border:2px solid #fff;
+    box-shadow:0 1px 4px rgba(15,23,42,.3);cursor:pointer;
+  }
+
+  /* Botões */
+  .btn{
+    border:1px solid var(--line);background:#fff;color:var(--text);
+    border-radius:8px;padding:8px 13px;font:inherit;font-size:12px;font-weight:600;
+    cursor:pointer;transition:all .15s;white-space:nowrap;
+  }
+  .btn:hover{background:#f8fafc;border-color:#cbd5e1}
+  .btn-primary{
+    border:0;background:var(--accent);color:#fff;
+    border-radius:8px;padding:8px 14px;font:inherit;font-size:12px;font-weight:600;
+    cursor:pointer;transition:background .15s;white-space:nowrap;
+  }
+  .btn-primary:hover{background:var(--accent-dark)}
+  .btn-danger{
+    border:0;background:var(--no);color:#fff;
+    border-radius:8px;padding:8px 14px;font:inherit;font-size:12px;font-weight:600;
+    cursor:pointer;transition:opacity .15s;white-space:nowrap;
+  }
+  .btn-danger:hover{opacity:.92}
+  .btn-soft{
+    border:0;background:var(--accent-soft);color:var(--accent-dark);
+    border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;font-weight:600;
+    cursor:pointer;transition:background .15s;white-space:nowrap;
+  }
+  .btn-soft:hover{background:#dbeafe}
+  .btn-ghost{
+    border:0;background:none;color:var(--muted);font:inherit;font-size:12px;
+    padding:5px 8px;border-radius:6px;cursor:pointer;
+  }
+  .btn-ghost:hover{color:var(--no);background:var(--no-bg)}
+  .link{border:0;background:none;color:var(--accent-dark);font:inherit;font-weight:600;padding:0;text-decoration:underline;cursor:pointer}
+
+  /* Formulários Inline */
+  .inline-form{
+    display:grid;grid-template-columns:1fr auto;gap:10px;
+    padding:14px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;margin-bottom:16px;
+  }
+  .inline-form-3{
+    display:grid;grid-template-columns:2fr 1fr auto;gap:10px;
+    padding:14px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;margin-bottom:16px;
+  }
+
+  /* Filtros */
+  .filters{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .filters-3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:16px;margin-bottom:12px}
+
+  /* Combobox */
+  .combo{position:relative}
+  .combo-trigger{
+    width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);
+    padding:8px 11px;font:inherit;font-size:13px;cursor:pointer;text-align:left;
+  }
+  .combo-trigger:hover{border-color:#cbd5e1}
+  .combo-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .combo-trigger::after{content:"▾";color:var(--muted);flex:none}
+  .combo-panel{
+    position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;
+    background:#fff;border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 10px 25px rgba(15,23,42,.1);padding:8px;max-height:230px;overflow:auto;
+  }
+  .combo-search{margin-bottom:6px;padding:6px 8px;font-size:12px}
+  .combo-option{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:pointer}
+  .combo-option:hover{background:#f1f5f9}
+  .combo-option input{width:14px;height:14px;accent-color:var(--accent);margin:0;flex:none}
+  .combo-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .chip{border:0;background:var(--accent-soft);color:var(--accent-dark);border-radius:999px;padding:2px 9px;font:inherit;font-size:11px;font-weight:600;cursor:pointer}
+  .chip:hover{background:#dbeafe}
+
+  /* Listas */
+  .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .row-item{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;
+    border:1px solid var(--line);border-radius:10px;background:#fff;transition:border-color .15s;
+  }
+  .row-item:hover{border-color:#cbd5e1}
+  .dot{
+    width:36px;height:36px;border-radius:9px;background:var(--accent-soft);
+    color:var(--accent-dark);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none;
+  }
+  .thumb{width:48px;height:40px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#f8fafc;flex:none}
+  .grow{flex:1;min-width:0}
+  .title{font-weight:650;font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row-actions{display:flex;align-items:center;gap:6px}
+
+  /* Upload e Fotos */
+  .dropzone{
+    border:1.5px dashed #cbd5e1;border-radius:12px;padding:22px;text-align:center;
+    background:#f8fafc;cursor:pointer;margin-bottom:18px;transition:all .15s;
+  }
+  .dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-soft)}
+  .dropzone p{margin:0 0 4px;font-size:13px;font-weight:500}
+  .dropzone small{color:var(--muted);font-size:11px}
+
+  .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+  .photo-tile{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+  .photo-tile img{width:100%;height:115px;object-fit:cover;display:block;background:#f8fafc}
+  .photo-tile-foot{padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .photo-tile span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cover-tag{font-size:10px;font-weight:700;color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 7px;border-radius:999px;flex:none}
+
+  /* Grid de Cards */
+  .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .card{
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;
+    box-shadow:var(--shadow);transition:transform .15s, box-shadow .15s;display:flex;flex-direction:column;
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.07)}
+  .card-img-wrap{position:relative;background:#f8fafc;border-bottom:1px solid var(--line)}
+  .card img{width:100%;height:165px;object-fit:cover;display:block}
+  .card-body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .card-brand{font-weight:700;font-size:14px}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .pill.ok{color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line)}
+  .pill.warn{color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line)}
+  .pill.no{color:var(--no);background:var(--no-bg);border:1px solid var(--no-line)}
+  .card-meta{font-size:12px;color:var(--muted)}
+
+  .ai-note{font-size:12px;line-height:1.4;padding:8px 10px;border-radius:8px}
+  .ai-note.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+  .ai-note.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line)}
+  .ai-note.no{background:var(--no-bg);color:var(--no);border:1px solid var(--no-line)}
+
+  .reason-box{
+    font-size:12px;line-height:1.4;padding:8px 10px;border-radius:8px;
+    background:#f8fafc;border:1px solid var(--line);color:var(--text);
+  }
+  .reason-box strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:2px}
+
+  .det-head{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
+  .det-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12px}
+  .det-row{
+    display:flex;flex-direction:column;gap:4px;padding:6px 8px;border-radius:7px;
+    background:#f8fafc;border:1px solid var(--line);
+  }
+  .det-row.match{background:var(--accent-soft);border-color:#bfdbfe}
+  .det-row-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .det-name{font-weight:600;color:var(--text)}
+  .det-prob{font-weight:700;color:var(--accent-dark);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .det-bar{height:4px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+  .det-bar i{display:block;height:100%;border-radius:999px;background:var(--accent)}
+
+  .card-foot{margin-top:auto;padding-top:8px;border-top:1px solid var(--line);display:flex;justify-content:flex-end}
+
+  /* Promotores */
+  .prom-card{
+    border:1px solid var(--line);border-radius:12px;padding:16px;background:#fff;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;
+  }
+  .prom-head{display:flex;align-items:center;gap:10px}
+  .avatar{
+    width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);
+    font-weight:700;font-size:13px;display:grid;place-items:center;flex:none;
+  }
+  .prom-bar{height:6px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+  .prom-bar i{display:block;height:100%;border-radius:999px;background:var(--accent)}
+  .prom-foot{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted)}
+
+  /* Aba Extras / Alerta do Promotor */
+  .alert-preview-wrap{display:flex;justify-content:center;padding:12px 0}
+  .promoter-alert-card{
+    width:100%;max-width:440px;background:#fff;border:1px solid var(--no-line);
+    border-radius:16px;padding:22px;box-shadow:0 12px 30px rgba(15,23,42,.1);
+    text-align:center;
+  }
+  .alert-icon-badge{
+    width:54px;height:54px;margin:0 auto 12px;border-radius:14px;
+    background:var(--no-bg);border:1px solid var(--no-line);color:var(--no);
+    display:grid;place-items:center;
+  }
+  .alert-photo-box{
+    margin:14px 0;border:1px solid var(--line);border-radius:10px;
+    overflow:hidden;background:#f8fafc;
+  }
+  .alert-photo-box img{width:100%;height:155px;object-fit:cover;display:block}
+  .alert-msg{
+    font-size:13px;color:var(--text);background:var(--no-bg);border:1px solid var(--no-line);
+    border-radius:10px;padding:10px 12px;margin-bottom:16px;text-align:left;
+  }
+  .alert-actions{display:flex;gap:10px;justify-content:center}
+  .alert-actions .btn,.alert-actions .btn-danger{flex:1;padding:10px 14px;font-size:13px}
+
+  /* Modais */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;
+    padding:16px;z-index:40;
+  }
+  .modal{
+    background:#fff;border-radius:14px;border:1px solid var(--line);width:100%;max-width:470px;
+    padding:20px;box-shadow:0 20px 40px rgba(15,23,42,.18);
+  }
+  .modal-grid{display:flex;flex-direction:column;gap:12px;margin:14px 0 18px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px}
+
+  .empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:12px;background:#fff}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--text);color:#fff;padding:9px 16px;border-radius:999px;font-size:12px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+  .toast.show{opacity:1}
+
+  @media (max-width:780px){
+    .filters,.filters-3,.inline-form,.inline-form-3{grid-template-columns:1fr}
+    .tabs{width:100%}
+    .tab{flex:1;text-align:center}
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">PDV</div>
+      <div>
+        <h1>PDV</h1>
+
+      </div>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="btn-primary" id="openNewAnalysis">+ Nova análise</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Seções">
+    <button type="button" class="tab active" data-view="analysis">Book de Fotos</button>
+    <button type="button" class="tab" data-view="catalog">Catálogo</button>
+    <button type="button" class="tab" data-view="promoters">Promotores</button>
+    <button type="button" class="tab" data-view="extras">Extras</button>
+  </nav>
+
+  <!-- ANÁLISE DE FOTOS -->
+  <section id="view-analysis">
+    <div class="panel">
+      <div class="bar-head">
+        <h2>Filtros de auditoria</h2>
+        <button type="button" class="btn" id="clearFilters">Limpar filtros</button>
+      </div>
+      <div class="filters">
+        <div class="field"><label>Marcas</label><div class="combo" id="comboBrands"></div></div>
+        <div class="field"><label>Produtos</label><div class="combo" id="comboProducts"></div></div>
+        <div class="field"><label>Situação</label><div class="combo" id="comboGeneral"></div></div>
+        <div class="field"><label>Promotores</label><div class="combo" id="comboPromoters"></div></div>
+        <div class="field"><label for="dateStart">Data inicial</label><input type="date" id="dateStart"></div>
+        <div class="field"><label for="dateEnd">Data final</label><input type="date" id="dateEnd"></div>
+      </div>
+    </div>
+    <div class="grid-cards" id="analysisList"></div>
+    <p class="empty" id="analysisEmpty" hidden>Nenhuma foto encontrada para os filtros selecionados.</p>
+  </section>
+
+  <!-- CATÁLOGO -->
+  <section id="view-catalog" hidden>
+    <div id="level-brands" class="panel">
+      <div class="bar-head">
+        <h2>Marcas</h2>
+        <button type="button" class="btn-primary" id="toggleBrandForm">+ Nova marca</button>
+      </div>
+      <form id="brandForm" class="inline-form" hidden>
+        <input type="text" id="brandNameInput" placeholder="Nome da marca (ex.: Nestlé)" maxlength="50" required>
+        <div style="display:flex;gap:6px">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn" id="cancelBrandForm">Cancelar</button>
+        </div>
+      </form>
+      <div style="margin-bottom:14px;max-width:300px">
+        <input type="search" id="brandSearch" placeholder="Buscar marca...">
+      </div>
+      <ul class="list" id="brandList"></ul>
+    </div>
+
+    <div id="level-products" class="panel" hidden>
+      <nav class="breadcrumb">
+        <button type="button" data-go="brands">Marcas</button>
+        <span>/</span>
+        <strong id="crumbBrand"></strong>
+      </nav>
+      <div class="bar-head">
+        <h2>Produtos — <span id="productsTitle"></span></h2>
+        <button type="button" class="btn-primary" id="toggleProductForm">+ Novo produto</button>
+      </div>
+      <form id="productForm" class="inline-form-3" hidden>
+        <input type="text" id="productNameInput" placeholder="Nome do produto" maxlength="60" required>
+        <input type="text" id="productCodeInput" placeholder="Código (opcional)" maxlength="20">
+        <div style="display:flex;gap:6px">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn" id="cancelProductForm">Cancelar</button>
+        </div>
+      </form>
+      <ul class="list" id="productList"></ul>
+    </div>
+
+    <div id="level-photos" class="panel" hidden>
+      <nav class="breadcrumb">
+        <button type="button" data-go="brands">Marcas</button>
+        <span>/</span>
+        <button type="button" data-go="products"><span id="crumbBrand2"></span></button>
+        <span>/</span>
+        <strong id="crumbProduct"></strong>
+      </nav>
+      <div class="bar-head">
+        <h2>Fotos de referência — <span id="repoTitle"></span></h2>
+      </div>
+      <div class="dropzone" id="repoDropzone" role="button" tabindex="0">
+        <p>Arraste imagens ou <button type="button" class="link" id="repoPick">selecione arquivos</button></p>
+        <small>JPG, PNG ou WebP · referências usadas pela IA para calcular a probabilidade na gôndola</small>
+      </div>
+      <input type="file" id="repoInput" accept="image/jpeg,image/png,image/webp" multiple hidden>
+      <div class="photos" id="repoPhotos"></div>
+      <p class="empty" id="repoEmpty" hidden>Nenhuma foto cadastrada para este produto.</p>
+    </div>
+  </section>
+
+  <!-- PROMOTORES -->
+  <section id="view-promoters" hidden>
+    <div class="panel">
+      <div class="bar-head">
+        <h2>Promotores</h2>
+        <button type="button" class="btn" id="clearPromoterFilters">Limpar filtros</button>
+      </div>
+      <div class="filters-3">
+        <div class="field"><label>Nome</label><div class="combo" id="comboPromoterNames"></div></div>
+        <div class="field">
+          <label for="rateMin">Aprovação mínima: <strong id="rateMinValue">0%</strong></label>
+          <div class="range-wrap"><input type="range" id="rateMin" min="0" max="100" value="0"></div>
+        </div>
+        <div class="field">
+          <label for="rateMax">Aprovação máxima: <strong id="rateMaxValue">100%</strong></label>
+          <div class="range-wrap"><input type="range" id="rateMax" min="0" max="100" value="100"></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-cards" id="promoterList"></div>
+    <p class="empty" id="promoterEmpty" hidden>Nenhum promotor encontrado.</p>
+  </section>
+
+  <!-- EXTRAS -->
+  <section id="view-extras" hidden>
+    <div class="panel">
+      <div class="bar-head">
+        <h2>Alerta de foto desaprovada para o promotor</h2>
+      </div>
+      <div class="alert-preview-wrap">
+        <div class="promoter-alert-card">
+          <div class="alert-icon-badge" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <h3>Foto desaprovada pela IA</h3>
+          <p class="sub" style="margin:0">A IA não confirmou os produtos esperados na gôndola enviada.</p>
+          <div class="alert-photo-box">
+            <img id="extraAlertImg" src="" alt="Prévia da foto desaprovada">
+          </div>
+          <div class="alert-msg">
+            Deseja cancelar o envio para tirar outra foto ou mandar mesmo assim?
+          </div>
+          <div class="alert-actions">
+            <button type="button" class="btn" id="extraCancelBtn">Cancelar</button>
+            <button type="button" class="btn-danger" id="extraSendBtn">Mandar mesmo assim</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- MODAL: NOVA ANÁLISE DE GÔNDOLA -->
+<div class="modal-backdrop" id="analysisModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="bar-head" style="margin-bottom:4px">
+      <h2 id="modalTitle">Enviar foto da gôndola</h2>
+      <button type="button" class="btn-ghost" id="closeModal">×</button>
+    </div>
+    <p class="sub" style="margin:0">A IA analisará os produtos da prateleira e calculará a probabilidade de presença da marca.</p>
+    <form id="newAnalysisForm">
+      <div class="modal-grid">
+        <div class="field">
+          <label for="anaBrand">Marca informada pelo promotor</label>
+          <select id="anaBrand" required></select>
+        </div>
+        <div class="field">
+          <label for="anaPromoter">Promotor</label>
+          <select id="anaPromoter" required></select>
+        </div>
+        <div class="field">
+          <label for="anaStore">Mercado / Loja</label>
+          <input type="text" id="anaStore" placeholder="Ex.: Supermercado Central" required>
+        </div>
+        <div class="field">
+          <label for="anaScenario">Cenário da gôndola (simulação da IA)</label>
+          <select id="anaScenario">
+            <option value="found">Gôndola com produtos da marca (aprovada)</option>
+            <option value="wrong_brand">Foto da gôndola de outra marca (desaprovada)</option>
+            <option value="low_quality">Foto borrada / escura (desaprovada)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="anaFile">Foto da gôndola (opcional — gera cena da prateleira se vazio)</label>
+          <input type="file" id="anaFile" accept="image/jpeg,image/png,image/webp">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="cancelModal">Cancelar</button>
+        <button type="submit" class="btn-primary">Analisar gôndola</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: ALERTA DE ENVIO DE FOTO DESAPROVADA -->
+<div class="modal-backdrop" id="disapprovedAlertModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle">
+    <div style="text-align:center">
+      <div class="alert-icon-badge" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <h2 id="alertModalTitle">Foto desaprovada pela IA</h2>
+      <p class="sub" id="alertModalReason" style="margin:4px 0 0"></p>
+    </div>
+    <div class="alert-photo-box">
+      <img id="alertModalImg" src="" alt="Foto desaprovada">
+    </div>
+    <div class="alert-actions">
+      <button type="button" class="btn" id="alertCancelBtn">Cancelar</button>
+      <button type="button" class="btn-danger" id="alertForceSendBtn">Mandar mesmo assim</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DESAPROVAR COM RECADO OBRIGATÓRIO -->
+<div class="modal-backdrop" id="disapproveReasonModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reasonModalTitle">
+    <div class="bar-head" style="margin-bottom:4px">
+      <h2 id="reasonModalTitle">Desaprovar foto</h2>
+      <button type="button" class="btn-ghost" id="closeReasonModal">×</button>
+    </div>
+    <p class="sub" style="margin:0">Informe obrigatoriamente o recado do motivo da desaprovação.</p>
+    <form id="disapproveReasonForm">
+      <div class="modal-grid">
+        <div class="field">
+          <label for="disapproveReasonInput">Recado (obrigatório)</label>
+          <textarea id="disapproveReasonInput" placeholder="Ex.: Produto fora do espaço combinado ou etiqueta ilegível..." required></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="cancelReasonModal">Cancelar</button>
+        <button type="submit" class="btn-danger">Confirmar desaprovação</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const STORAGE_KEY = 'pdv-gondola-auditoria-v2';
+  const CONFIDENCE_THRESHOLD = 55;
+  const $ = id => document.getElementById(id);
+  const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const norm = v => String(v || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  /* Ilustrações individuais dos produtos (Catálogo) */
+  const ILLUSTRATIONS = {
+    whey: `<rect x="122" y="42" width="76" height="94" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2.5"/>
+           <rect x="128" y="28" width="64" height="16" rx="5" fill="#2563eb"/>
+           <rect x="132" y="64" width="56" height="44" rx="5" fill="#fff"/>
+           <line x1="140" y1="76" x2="180" y2="76" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+           <line x1="144" y1="88" x2="176" y2="88" stroke="#93c5fd" stroke-width="3" stroke-linecap="round"/>`,
+
+    barra: `<polygon points="102,78 122,60 198,60 218,78 198,96 122,96" fill="#fef3c7" stroke="#d97706" stroke-width="2.5"/>
+            <line x1="122" y1="60" x2="122" y2="96" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+            <line x1="198" y1="60" x2="198" y2="96" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+            <rect x="134" y="70" width="52" height="16" rx="4" fill="#d97706" opacity=".25"/>`,
+
+    creatina: `<rect x="128" y="50" width="64" height="84" rx="12" fill="#e0e7ff" stroke="#4338ca" stroke-width="2.5"/>
+               <rect x="134" y="36" width="52" height="15" rx="4" fill="#4338ca"/>
+               <circle cx="160" cy="92" r="18" fill="#fff" stroke="#4338ca" stroke-width="2"/>`,
+
+    isqueiro: `<rect x="136" y="56" width="48" height="78" rx="9" fill="#e0f2fe" stroke="#0284c7" stroke-width="2.5"/>
+               <rect x="148" y="42" width="24" height="14" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+               <path d="M160 16 C168 24, 169 32, 160 38 C151 32, 152 24, 160 16 Z" fill="#f97316"/>`,
+
+    acendedor: `<rect x="122" y="88" width="44" height="44" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="2.5"/>
+                <path d="M158 92 L206 36 L216 44 L166 102 Z" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+                <circle cx="212" cy="39" r="5" fill="#f97316"/>`,
+
+    detergente: `<path d="M138 56 L182 56 L190 74 L190 134 C190 139 186 142 181 142 L139 142 C134 142 130 139 130 134 L130 74 Z" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
+                 <rect x="150" y="34" width="20" height="22" rx="4" fill="#16a34a"/>
+                 <rect x="138" y="82" width="44" height="36" rx="4" fill="#fff"/>`,
+
+    limpador: `<rect x="132" y="64" width="56" height="76" rx="10" fill="#e0e7ff" stroke="#4f46e5" stroke-width="2.5"/>
+               <path d="M148 64 L148 44 L176 44 L188 50 L184 58 L172 54 L172 64" fill="#c7d2fe" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round"/>
+               <line x1="188" y1="50" x2="202" y2="48" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>`,
+
+    desinfetante: `<path d="M134 52 L186 52 L192 78 L192 136 C192 140 188 143 184 143 L136 143 C132 143 128 140 128 136 L128 78 Z" fill="#fae8ff" stroke="#9333ea" stroke-width="2.5"/>
+                   <rect x="148" y="34" width="24" height="18" rx="4" fill="#9333ea"/>`,
+
+    panela: `<ellipse cx="148" cy="96" rx="42" ry="26" fill="#f1f5f9" stroke="#334155" stroke-width="2.5"/>
+             <ellipse cx="148" cy="92" rx="34" ry="18" fill="#475569"/>
+             <line x1="188" y1="92" x2="226" y2="76" stroke="#334155" stroke-width="7" stroke-linecap="round"/>`,
+
+    spatula: `<path d="M136 136 L166 76" stroke="#334155" stroke-width="7" stroke-linecap="round"/>
+              <path d="M150 44 L194 64 L182 86 C178 92 170 93 164 90 L144 80 C138 77 136 69 140 62 Z" fill="#fae8ff" stroke="#9333ea" stroke-width="2.5"/>
+              <circle cx="164" cy="64" r="3" fill="#9333ea"/><circle cx="176" cy="70" r="3" fill="#9333ea"/>`
+  };
+
+  function productPhoto(key, title) {
+    const body = ILLUSTRATIONS[key] || ILLUSTRATIONS.whey;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="200" viewBox="0 0 360 200">
+      <rect width="360" height="200" fill="#f8fafc"/>
+      <g transform="translate(20, 4)">${body}</g>
+      <text x="180" y="182" font-family="sans-serif" font-size="12" font-weight="600" fill="#334155" text-anchor="middle">${esc(title)}</text>
+    </svg>`;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  /* Ilustração limpa de gôndola de mercado sem legenda embaixo */
+  function gondolaScene(type, highlightColor = '#2563eb') {
+    const isBlurry = type === 'low_quality';
+    const isWrong = type === 'wrong_brand';
+    const bg = isBlurry ? '#e2e8f0' : '#f1f5f9';
+    const itemFill = isWrong ? '#fda4af' : (isBlurry ? '#cbd5e1' : highlightColor);
+    const boxStroke = isWrong ? '#e11d48' : (isBlurry ? '#94a3b8' : '#16a34a');
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="190" viewBox="0 0 360 190">
+      <rect width="360" height="190" fill="${bg}"/>
+      <rect x="24" y="16" width="312" height="156" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+      <line x1="24" y1="68" x2="336" y2="68" stroke="#94a3b8" stroke-width="3"/>
+      <line x1="24" y1="120" x2="336" y2="120" stroke="#94a3b8" stroke-width="3"/>
+      <line x1="24" y1="172" x2="336" y2="172" stroke="#64748b" stroke-width="4"/>
+
+      <rect x="38" y="32" width="22" height="34" rx="3" fill="#cbd5e1"/>
+      <rect x="66" y="36" width="26" height="30" rx="3" fill="#e2e8f0"/>
+      <rect x="100" y="28" width="24" height="38" rx="3" fill="#cbd5e1"/>
+      <rect x="134" y="32" width="30" height="34" rx="4" fill="${itemFill}" opacity="${isBlurry ? '0.45' : '0.88'}"/>
+      <rect x="170" y="32" width="30" height="34" rx="4" fill="${itemFill}" opacity="${isBlurry ? '0.45' : '0.88'}"/>
+      ${!isBlurry ? `<rect x="131" y="28" width="72" height="40" rx="5" fill="none" stroke="${boxStroke}" stroke-width="2" stroke-dasharray="4 2"/>` : ''}
+      <rect x="212" y="34" width="24" height="32" rx="3" fill="#cbd5e1"/>
+      <rect x="244" y="30" width="28" height="36" rx="3" fill="#e2e8f0"/>
+      <rect x="280" y="36" width="38" height="30" rx="3" fill="#cbd5e1"/>
+
+      <rect x="38" y="84" width="28" height="34" rx="3" fill="#e2e8f0"/>
+      <rect x="74" y="80" width="32" height="38" rx="4" fill="${itemFill}" opacity="${isBlurry ? '0.4' : '0.92'}"/>
+      <rect x="112" y="80" width="32" height="38" rx="4" fill="${itemFill}" opacity="${isBlurry ? '0.4' : '0.92'}"/>
+      ${!isBlurry ? `<rect x="71" y="77" width="76" height="43" rx="5" fill="none" stroke="${boxStroke}" stroke-width="2" stroke-dasharray="4 2"/>` : ''}
+      <rect x="156" y="86" width="24" height="32" rx="3" fill="#cbd5e1"/>
+      <rect x="188" y="82" width="26" height="36" rx="3" fill="#e2e8f0"/>
+      <rect x="222" y="86" width="36" height="32" rx="3" fill="#cbd5e1"/>
+      <rect x="266" y="80" width="24" height="38" rx="3" fill="#e2e8f0"/>
+      <rect x="296" y="84" width="24" height="34" rx="3" fill="#cbd5e1"/>
+
+      <rect x="40" y="136" width="34" height="34" rx="3" fill="#cbd5e1"/>
+      <rect x="82" y="138" width="34" height="32" rx="3" fill="#e2e8f0"/>
+      <rect x="124" y="134" width="28" height="36" rx="3" fill="#cbd5e1"/>
+      <rect x="160" y="136" width="40" height="34" rx="3" fill="#e2e8f0"/>
+      <rect x="208" y="134" width="28" height="36" rx="3" fill="#cbd5e1"/>
+      <rect x="244" y="138" width="36" height="32" rx="3" fill="#e2e8f0"/>
+      <rect x="288" y="136" width="30" height="34" rx="3" fill="#cbd5e1"/>
+
+      ${isBlurry ? `<rect x="24" y="16" width="312" height="156" rx="6" fill="#94a3b8" opacity="0.35"/>` : ''}
+    </svg>`;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  const art = {
+    whey: productPhoto('whey', 'Whey Protein 900g'),
+    barra: productPhoto('barra', 'Barra de Proteína'),
+    creatina: productPhoto('creatina', 'Creatina 300g'),
+    isqueiro: productPhoto('isqueiro', 'Isqueiro Recarregável'),
+    acendedor: productPhoto('acendedor', 'Acendedor a Gás'),
+    detergente: productPhoto('detergente', 'Detergente Líquido'),
+    limpador: productPhoto('limpador', 'Limpador Multiuso'),
+    desinfetante: productPhoto('desinfetante', 'Desinfetante 2L'),
+    panela: productPhoto('panela', 'Panela Antiaderente'),
+    spatula: productPhoto('spatula', 'Espátula de Silicone'),
+
+    gondolaIntegral: gondolaScene('found', '#3b82f6'),
+    gondolaFiatLux: gondolaScene('found', '#0ea5e9'),
+    gondolaSanol: gondolaScene('found', '#22c55e'),
+    gondolaSantaMaria: gondolaScene('found', '#a855f7'),
+    gondolaMarcaErrada: gondolaScene('wrong_brand', '#f43f5e'),
+    gondolaMaQualidade: gondolaScene('low_quality', '#94a3b8')
+  };
+
+  $('extraAlertImg').src = art.gondolaMaQualidade;
+
+  function formatFoundCount(n) {
+    return n === 1 ? '1 produto encontrado' : `${n} produtos encontrados`;
+  }
+
+  /* Avalia o resultado da IA e aplica override manual se houver */
+  function evaluateAnalysis(photo, products) {
+    const brandProductIds = new Set(products.filter(p => p.brandId === photo.brandId).map(p => p.id));
+    const brandMatches = (photo.detections || [])
+      .filter(d => brandProductIds.has(d.productId) && d.score >= CONFIDENCE_THRESHOLD)
+      .sort((a, b) => b.score - a.score);
+
+    let aiStatus = 'low_quality';
+    let aiNote = 'Probabilidade insuficiente — foto borrada, escura ou produto obstruído.';
+    if (brandMatches.length > 0) {
+      aiStatus = 'ok';
+      aiNote = formatFoundCount(brandMatches.length);
+    } else if (photo.issue === 'wrong_brand') {
+      aiStatus = 'wrong_brand';
+      aiNote = 'Nenhum produto da marca encontrado — gôndola de outra marca.';
+    }
+
+    if (photo.manualOverride === 'disapproved') {
+      return {
+        status: 'disapproved',
+        ok: false,
+        label: 'Desaprovada',
+        matches: brandMatches,
+        note: aiNote,
+        reason: photo.disapproveReason || ''
+      };
+    }
+
+    if (photo.manualOverride === 'approved') {
+      return {
+        status: 'ok',
+        ok: true,
+        label: 'Aprovada',
+        matches: brandMatches,
+        note: brandMatches.length > 0 ? formatFoundCount(brandMatches.length) : 'Aprovada manualmente na auditoria.',
+        reason: ''
+      };
+    }
+
+    return {
+      status: aiStatus,
+      ok: aiStatus === 'ok',
+      label: aiStatus === 'ok' ? 'Aprovada' : (aiStatus === 'wrong_brand' ? 'Marca errada' : 'Má qualidade'),
+      matches: brandMatches,
+      note: aiNote,
+      reason: ''
+    };
+  }
+
+  function formatDateTime(ts) {
+    return new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function seedState() {
+    const brands = [
+      { id: 'b_integral', name: 'IntegralMedica' },
+      { id: 'b_fiatlux', name: 'Fiat Lux' },
+      { id: 'b_sanol', name: 'Sanol' },
+      { id: 'b_santamaria', name: 'Santa Maria' }
+    ];
+    const products = [
+      { id: 'whey', brandId: 'b_integral', name: 'Whey protein 900 g', code: 'PRD-0142', photos: [{ id: 'f1', name: 'whey-frente.jpg', dataUrl: art.whey, cover: true }] },
+      { id: 'barra', brandId: 'b_integral', name: 'Barra de proteína', code: 'PRD-0143', photos: [{ id: 'f2', name: 'barra-frente.jpg', dataUrl: art.barra, cover: true }] },
+      { id: 'creatina', brandId: 'b_integral', name: 'Creatina 300 g', code: 'PRD-0144', photos: [{ id: 'f9', name: 'creatina-frente.jpg', dataUrl: art.creatina, cover: true }] },
+      { id: 'isqueiro', brandId: 'b_fiatlux', name: 'Isqueiro recarregável', code: 'PRD-0387', photos: [{ id: 'f3', name: 'isqueiro-frente.jpg', dataUrl: art.isqueiro, cover: true }] },
+      { id: 'acendedor', brandId: 'b_fiatlux', name: 'Acendedor a gás', code: 'PRD-0388', photos: [{ id: 'f4', name: 'acendedor-frente.jpg', dataUrl: art.acendedor, cover: true }] },
+      { id: 'detergente', brandId: 'b_sanol', name: 'Detergente líquido', code: 'PRD-0210', photos: [{ id: 'f5', name: 'detergente-frente.jpg', dataUrl: art.detergente, cover: true }] },
+      { id: 'limpador', brandId: 'b_sanol', name: 'Limpador multiuso', code: 'PRD-0211', photos: [{ id: 'f6', name: 'limpador-frente.jpg', dataUrl: art.limpador, cover: true }] },
+      { id: 'desinfetante', brandId: 'b_sanol', name: 'Desinfetante 2 L', code: 'PRD-0212', photos: [{ id: 'f10', name: 'desinfetante-frente.jpg', dataUrl: art.desinfetante, cover: true }] },
+      { id: 'panela', brandId: 'b_santamaria', name: 'Panela antiaderente', code: 'PRD-0511', photos: [{ id: 'f7', name: 'panela-frente.jpg', dataUrl: art.panela, cover: true }] },
+      { id: 'spatula', brandId: 'b_santamaria', name: 'Espátula de silicone', code: 'PRD-0512', photos: [{ id: 'f8', name: 'espatula-frente.jpg', dataUrl: art.spatula, cover: true }] }
+    ];
+    const promoters = [
+      { id: 'p_camila', name: 'Camila Rocha', store: 'Loja Centro' },
+      { id: 'p_diego', name: 'Diego Alves', store: 'Loja Sul' },
+      { id: 'p_larissa', name: 'Larissa Lima', store: 'Loja Norte' },
+      { id: 'p_marcos', name: 'Marcos Vieira', store: 'Loja Leste' },
+      { id: 'p_bianca', name: 'Bianca Nunes', store: 'Loja Oeste' },
+      { id: 'p_rafael', name: 'Rafael Costa', store: 'Mercado Central' }
+    ];
+    const now = Date.now();
+    const day = 86400000;
+    const analysis = [
+      { id: 'a1', dataUrl: art.gondolaIntegral, brandId: 'b_integral', promoterId: 'p_camila', store: 'Loja Centro', ts: now - day * 0.2, detections: [{ productId: 'whey', score: 94 }, { productId: 'creatina', score: 79 }] },
+      { id: 'a2', dataUrl: art.gondolaIntegral, brandId: 'b_integral', promoterId: 'p_bianca', store: 'Loja Oeste', ts: now - day * 0.6, detections: [{ productId: 'barra', score: 86 }] },
+      { id: 'a3', dataUrl: art.gondolaIntegral, brandId: 'b_integral', promoterId: 'p_rafael', store: 'Mercado Central', ts: now - day * 1.1, detections: [{ productId: 'creatina', score: 91 }, { productId: 'whey', score: 74 }] },
+      { id: 'a4', dataUrl: art.gondolaFiatLux, brandId: 'b_fiatlux', promoterId: 'p_diego', store: 'Loja Sul', ts: now - day * 1.5, detections: [{ productId: 'isqueiro', score: 89 }, { productId: 'acendedor', score: 66 }] },
+      { id: 'a5', dataUrl: art.gondolaFiatLux, brandId: 'b_fiatlux', promoterId: 'p_marcos', store: 'Loja Leste', ts: now - day * 2.1, detections: [{ productId: 'acendedor', score: 81 }] },
+      { id: 'a6', dataUrl: art.gondolaSanol, brandId: 'b_sanol', promoterId: 'p_larissa', store: 'Loja Norte', ts: now - day * 2.7, detections: [{ productId: 'detergente', score: 92 }, { productId: 'limpador', score: 74 }] },
+      { id: 'a7', dataUrl: art.gondolaSanol, brandId: 'b_sanol', promoterId: 'p_camila', store: 'Loja Centro', ts: now - day * 3.2, detections: [{ productId: 'limpador', score: 85 }] },
+      { id: 'a8', dataUrl: art.gondolaSanol, brandId: 'b_sanol', promoterId: 'p_bianca', store: 'Loja Oeste', ts: now - day * 4.0, detections: [{ productId: 'desinfetante', score: 93 }] },
+      { id: 'a9', dataUrl: art.gondolaSantaMaria, brandId: 'b_santamaria', promoterId: 'p_rafael', store: 'Mercado Central', ts: now - day * 4.8, detections: [{ productId: 'panela', score: 90 }, { productId: 'spatula', score: 72 }] },
+      { id: 'a10', dataUrl: art.gondolaSantaMaria, brandId: 'b_santamaria', promoterId: 'p_larissa', store: 'Loja Norte', ts: now - day * 5.4, detections: [{ productId: 'spatula', score: 84 }] },
+      { id: 'a11', dataUrl: art.gondolaIntegral, brandId: 'b_integral', promoterId: 'p_diego', store: 'Loja Sul', ts: now - day * 6.2, detections: [{ productId: 'whey', score: 88 }] },
+      { id: 'a12', dataUrl: art.gondolaFiatLux, brandId: 'b_fiatlux', promoterId: 'p_camila', store: 'Loja Centro', ts: now - day * 7.0, detections: [{ productId: 'isqueiro', score: 95 }] },
+      { id: 'a13', dataUrl: art.gondolaMarcaErrada, brandId: 'b_sanol', promoterId: 'p_marcos', store: 'Loja Leste', ts: now - day * 8.1, issue: 'wrong_brand', detections: [] },
+      { id: 'a14', dataUrl: art.gondolaMaQualidade, brandId: 'b_santamaria', promoterId: 'p_diego', store: 'Loja Sul', ts: now - day * 9.0, issue: 'low_quality', detections: [] },
+      { id: 'a15', dataUrl: art.gondolaMaQualidade, brandId: 'b_integral', promoterId: 'p_marcos', store: 'Loja Leste', ts: now - day * 10.2, issue: 'low_quality', detections: [] },
+      { id: 'a16', dataUrl: art.gondolaMarcaErrada, brandId: 'b_fiatlux', promoterId: 'p_bianca', store: 'Loja Oeste', ts: now - day * 11.5, issue: 'wrong_brand', detections: [] }
+    ];
+    analysis.forEach(ph => {
+      ph.date = formatDateTime(ph.ts);
+      ph.result = evaluateAnalysis(ph, products);
+    });
+    return { brands, products, promoters, analysis };
+  }
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (saved?.brands && saved?.products && saved?.analysis) {
+        saved.analysis.forEach((ph, idx) => {
+          if (!ph.ts) ph.ts = Date.now() - (saved.analysis.length - idx) * 86400000;
+          if (!ph.date) ph.date = formatDateTime(ph.ts);
+          ph.result = evaluateAnalysis(ph, saved.products);
+        });
+        return saved;
+      }
+    } catch (_) {}
+    return seedState();
+  }
+
+  let state = loadState();
+  let level = 'brands';
+  let currentBrandId = null;
+  let currentProductId = null;
+  let pendingDisapproveId = null;
+  let pendingAlertEntry = null;
+  let toastTimer;
+
+  const filters = {
+    brands: new Set(),
+    products: new Set(),
+    general: new Set(),
+    promoters: new Set(),
+    promoterNames: new Set()
+  };
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (_) { toast('Limite de armazenamento local atingido.'); }
+  }
+
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  const getBrand = id => state.brands.find(b => b.id === id);
+  const getProduct = id => state.products.find(p => p.id === id);
+  const getPromoter = id => state.promoters.find(p => p.id === id);
+  const getAnalysis = id => state.analysis.find(a => a.id === id);
+
+  /* Combobox reutilizável */
+  const combos = {
+    brands: {
+      el: 'comboBrands',
+      placeholder: 'Todas as marcas',
+      options: () => state.brands.map(b => ({ value: b.id, label: b.name })),
+      onChange: () => {
+        if (filters.brands.size) {
+          const allowed = new Set(state.products.filter(p => filters.brands.has(p.brandId)).map(p => p.id));
+          [...filters.products].forEach(id => { if (!allowed.has(id)) filters.products.delete(id); });
+        }
+        renderAnalysis();
+        renderCombo('products');
+      }
+    },
+    products: {
+      el: 'comboProducts',
+      placeholder: 'Todos os produtos',
+      options: () => state.products
+        .filter(p => !filters.brands.size || filters.brands.has(p.brandId))
+        .map(p => ({ value: p.id, label: p.name })),
+      onChange: renderAnalysis
+    },
+    general: {
+      el: 'comboGeneral',
+      placeholder: 'Todas as situações',
+      options: () => [
+        { value: 'ok', label: 'Aprovada' },
+        { value: 'disapproved', label: 'Desaprovada' },
+        { value: 'wrong_brand', label: 'Marca errada' },
+        { value: 'low_quality', label: 'Má qualidade' }
+      ],
+      onChange: renderAnalysis
+    },
+    promoters: {
+      el: 'comboPromoters',
+      placeholder: 'Todos',
+      options: () => state.promoters.map(p => ({ value: p.id, label: p.name })),
+      onChange: renderAnalysis
+    },
+    promoterNames: {
+      el: 'comboPromoterNames',
+      placeholder: 'Todos os nomes',
+      options: () => state.promoters.map(p => ({ value: p.id, label: p.name })),
+      onChange: renderPromoters
+    }
+  };
+
+  function renderCombo(key) {
+    const cfg = combos[key];
+    const root = $(cfg.el);
+    let trigger = root.querySelector('.combo-trigger');
+    let panel = root.querySelector('.combo-panel');
+    let chips = root.querySelector('.combo-chips');
+
+    if (!trigger) {
+      trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'combo-trigger';
+      trigger.innerHTML = '<span></span>';
+      trigger.addEventListener('click', () => {
+        const willOpen = panel.hidden;
+        document.querySelectorAll('.combo-panel').forEach(p => { p.hidden = true; });
+        panel.hidden = !willOpen;
+      });
+
+      panel = document.createElement('div');
+      panel.className = 'combo-panel';
+      panel.hidden = true;
+
+      const search = document.createElement('input');
+      search.type = 'search';
+      search.className = 'combo-search';
+      search.placeholder = 'Buscar...';
+      search.addEventListener('input', () => renderCombo(key));
+
+      const opts = document.createElement('div');
+      opts.addEventListener('change', e => {
+        const cb = e.target.closest('input[type="checkbox"]');
+        if (!cb) return;
+        if (cb.checked) filters[key].add(cb.value);
+        else filters[key].delete(cb.value);
+        cfg.onChange();
+        renderCombo(key);
+      });
+
+      panel.append(search, opts);
+
+      chips = document.createElement('div');
+      chips.className = 'combo-chips';
+      chips.addEventListener('click', e => {
+        const btn = e.target.closest('[data-val]');
+        if (!btn) return;
+        filters[key].delete(btn.dataset.val);
+        cfg.onChange();
+        renderCombo(key);
+      });
+
+      root.append(trigger, panel, chips);
+    }
+
+    const options = cfg.options();
+    const valid = new Set(options.map(o => o.value));
+    [...filters[key]].forEach(v => { if (!valid.has(v)) filters[key].delete(v); });
+
+    const wasOpen = !panel.hidden;
+    const term = norm(panel.querySelector('.combo-search').value);
+    const sel = filters[key];
+
+    trigger.querySelector('span').textContent = !sel.size
+      ? cfg.placeholder
+      : sel.size === 1
+        ? (options.find(o => sel.has(o.value))?.label || cfg.placeholder)
+        : `${sel.size} selecionados`;
+
+    panel.lastChild.innerHTML = options
+      .filter(o => !term || norm(o.label).includes(term))
+      .map(o => `<label class="combo-option"><input type="checkbox" value="${esc(o.value)}" ${sel.has(o.value) ? 'checked' : ''}><span>${esc(o.label)}</span></label>`)
+      .join('') || '<div class="sub" style="padding:6px">Nenhum resultado</div>';
+
+    chips.innerHTML = [...sel].map(v => {
+      const label = options.find(o => o.value === v)?.label || v;
+      return `<button type="button" class="chip" data-val="${esc(v)}">${esc(label)} ×</button>`;
+    }).join('');
+
+    panel.hidden = !wasOpen;
+  }
+
+  function renderAllCombos() {
+    Object.keys(combos).forEach(renderCombo);
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.combo')) {
+      document.querySelectorAll('.combo-panel').forEach(p => { p.hidden = true; });
+    }
+  });
+
+  /* Navegação */
+  function switchView(view) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    $('view-analysis').hidden = view !== 'analysis';
+    $('view-catalog').hidden = view !== 'catalog';
+    $('view-promoters').hidden = view !== 'promoters';
+    $('view-extras').hidden = view !== 'extras';
+    renderAllCombos();
+    if (view === 'catalog') renderCatalog();
+    if (view === 'analysis') renderAnalysis();
+    if (view === 'promoters') renderPromoters();
+  }
+
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  /* Aba Extras: botões de demonstração do alerta */
+  $('extraCancelBtn').addEventListener('click', () => {
+    toast('Envio cancelado pelo promotor.');
+  });
+  $('extraSendBtn').addEventListener('click', () => {
+    toast('Foto enviada mesmo assim.');
+  });
+
+  /* Catálogo */
+  function renderCatalog() {
+    $('level-brands').hidden = level !== 'brands';
+    $('level-products').hidden = level !== 'products';
+    $('level-photos').hidden = level !== 'photos';
+
+    if (level === 'brands') {
+      const q = norm($('brandSearch').value);
+      const list = state.brands.filter(b => !q || norm(b.name).includes(q));
+      $('brandList').innerHTML = list.map(b => `
+        <li class="row-item">
+          <span class="dot">${esc(b.name.slice(0, 1).toUpperCase())}</span>
+          <div class="grow">
+            <span class="title">${esc(b.name)}</span>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn-soft" data-open-brand="${b.id}">Produtos →</button>
+            <button type="button" class="btn-ghost" data-del-brand="${b.id}" title="Excluir marca">×</button>
+          </div>
+        </li>
+      `).join('') || '<li class="empty">Nenhuma marca encontrada.</li>';
+    }
+
+    if (level === 'products') {
+      const brand = getBrand(currentBrandId);
+      if (!brand) { level = 'brands'; return renderCatalog(); }
+      $('crumbBrand').textContent = brand.name;
+      $('crumbBrand2').textContent = brand.name;
+      $('productsTitle').textContent = brand.name;
+      const list = state.products.filter(p => p.brandId === brand.id);
+      $('productList').innerHTML = list.map(p => {
+        const cover = p.photos.find(f => f.cover) || p.photos[0];
+        return `<li class="row-item">
+          ${cover ? `<img class="thumb" src="${esc(cover.dataUrl)}" alt="">` : '<span class="dot">IMG</span>'}
+          <div class="grow">
+            <span class="title">${esc(p.name)}</span>
+            <span class="sub">${esc(p.code)}</span>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn-soft" data-open-product="${p.id}">Fotos →</button>
+            <button type="button" class="btn-ghost" data-del-product="${p.id}" title="Excluir produto">×</button>
+          </div>
+        </li>`;
+      }).join('') || '<li class="empty">Nenhum produto cadastrado nesta marca.</li>';
+    }
+
+    if (level === 'photos') {
+      const product = getProduct(currentProductId);
+      if (!product) { level = 'products'; return renderCatalog(); }
+      $('crumbProduct').textContent = product.name;
+      $('repoTitle').textContent = product.name;
+      $('repoEmpty').hidden = product.photos.length > 0;
+      $('repoPhotos').innerHTML = product.photos.map(f => `
+        <div class="photo-tile">
+          <img src="${esc(f.dataUrl)}" alt="${esc(f.name)}">
+          <div class="photo-tile-foot">
+            <span title="${esc(f.name)}">${esc(f.name)}</span>
+            ${f.cover
+              ? '<span class="cover-tag">Capa</span>'
+              : `<button type="button" class="btn" style="padding:3px 7px;font-size:11px" data-cover="${f.id}">Capa</button>`}
+            <button type="button" class="btn-ghost" data-del-photo="${f.id}">×</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  $('brandSearch').addEventListener('input', renderCatalog);
+
+  /* CRUD Marcas e Produtos */
+  $('toggleBrandForm').addEventListener('click', () => {
+    $('brandForm').hidden = !$('brandForm').hidden;
+    if (!$('brandForm').hidden) $('brandNameInput').focus();
+  });
+  $('cancelBrandForm').addEventListener('click', () => {
+    $('brandForm').reset();
+    $('brandForm').hidden = true;
+  });
+  $('brandForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('brandNameInput').value.trim();
+    if (!name) return;
+    state.brands.push({ id: uid('b'), name });
+    save();
+    $('brandForm').reset();
+    $('brandForm').hidden = true;
+    renderAllCombos();
+    renderCatalog();
+    toast('Marca adicionada.');
+  });
+
+  $('toggleProductForm').addEventListener('click', () => {
+    $('productForm').hidden = !$('productForm').hidden;
+    if (!$('productForm').hidden) $('productNameInput').focus();
+  });
+  $('cancelProductForm').addEventListener('click', () => {
+    $('productForm').reset();
+    $('productForm').hidden = true;
+  });
+  $('productForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('productNameInput').value.trim();
+    if (!name || !currentBrandId) return;
+    const code = $('productCodeInput').value.trim() || `PRD-${Math.floor(1000 + Math.random() * 9000)}`;
+    const id = uid('prd');
+    state.products.push({
+      id,
+      brandId: currentBrandId,
+      name,
+      code,
+      photos: [{ id: uid('ph'), name: 'referencia.jpg', dataUrl: productPhoto('whey', name), cover: true }]
+    });
+    save();
+    $('productForm').reset();
+    $('productForm').hidden = true;
+    renderAllCombos();
+    renderCatalog();
+    toast('Produto adicionado.');
+  });
+
+  $('view-catalog').addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) {
+      if (go.dataset.go === 'brands') { level = 'brands'; currentBrandId = null; currentProductId = null; }
+      if (go.dataset.go === 'products') { level = 'products'; currentProductId = null; }
+      return renderCatalog();
+    }
+
+    const openBrand = e.target.closest('[data-open-brand]');
+    if (openBrand) { currentBrandId = openBrand.dataset.openBrand; level = 'products'; return renderCatalog(); }
+
+    const delBrand = e.target.closest('[data-del-brand]');
+    if (delBrand) {
+      const id = delBrand.dataset.delBrand;
+      state.brands = state.brands.filter(b => b.id !== id);
+      const removedProducts = new Set(state.products.filter(p => p.brandId === id).map(p => p.id));
+      state.products = state.products.filter(p => p.brandId !== id);
+      state.analysis = state.analysis.filter(a => a.brandId !== id);
+      state.analysis.forEach(a => {
+        a.detections = a.detections.filter(d => !removedProducts.has(d.productId));
+        a.result = evaluateAnalysis(a, state.products);
+      });
+      save(); renderAllCombos(); renderCatalog(); toast('Marca removida.');
+      return;
+    }
+
+    const openProduct = e.target.closest('[data-open-product]');
+    if (openProduct) { currentProductId = openProduct.dataset.openProduct; level = 'photos'; return renderCatalog(); }
+
+    const delProduct = e.target.closest('[data-del-product]');
+    if (delProduct) {
+      const id = delProduct.dataset.delProduct;
+      state.products = state.products.filter(p => p.id !== id);
+      state.analysis.forEach(a => {
+        a.detections = a.detections.filter(d => d.productId !== id);
+        a.result = evaluateAnalysis(a, state.products);
+      });
+      save(); renderAllCombos(); renderCatalog(); toast('Produto removido.');
+      return;
+    }
+
+    const product = getProduct(currentProductId);
+    if (!product) return;
+
+    const coverBtn = e.target.closest('[data-cover]');
+    if (coverBtn) {
+      product.photos.forEach(f => { f.cover = f.id === coverBtn.dataset.cover; });
+      save(); renderCatalog(); toast('Capa definida.');
+    }
+
+    const delBtn = e.target.closest('[data-del-photo]');
+    if (delBtn) {
+      const target = product.photos.find(f => f.id === delBtn.dataset.delPhoto);
+      product.photos = product.photos.filter(f => f.id !== delBtn.dataset.delPhoto);
+      if (target?.cover && product.photos.length) product.photos[0].cover = true;
+      save(); renderCatalog(); toast('Foto removida.');
+    }
+  });
+
+  function readFile(file) {
+    return new Promise((resolve, reject) => {
+      if (!file?.type.startsWith('image/')) return reject(new Error('Arquivo inválido.'));
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, 900 / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        };
+        img.onerror = () => reject(new Error('Imagem corrompida.'));
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleFiles(files) {
+    const product = getProduct(currentProductId);
+    if (!product) return;
+    let added = 0;
+    for (const file of files) {
+      try {
+        const dataUrl = await readFile(file);
+        product.photos.push({ id: uid('ph'), name: file.name, dataUrl, cover: product.photos.length === 0 });
+        added++;
+      } catch (err) { toast(err.message); }
+    }
+    if (added) { save(); renderCatalog(); toast('Fotos adicionadas.'); }
+  }
+
+  $('repoPick').addEventListener('click', e => { e.stopPropagation(); $('repoInput').click(); });
+  $('repoDropzone').addEventListener('click', () => $('repoInput').click());
+  $('repoDropzone').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('repoInput').click(); }
+  });
+  $('repoInput').addEventListener('change', e => { handleFiles([...e.target.files]); e.target.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => $('repoDropzone').addEventListener(ev, e => { e.preventDefault(); $('repoDropzone').classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(ev => $('repoDropzone').addEventListener(ev, e => { e.preventDefault(); $('repoDropzone').classList.remove('drag'); }));
+  $('repoDropzone').addEventListener('drop', e => handleFiles([...e.dataTransfer.files]));
+
+  /* Análise de fotos */
+  function renderAnalysis() {
+    const startVal = $('dateStart').value;
+    const endVal = $('dateEnd').value;
+    const startTs = startVal ? new Date(`${startVal}T00:00:00`).getTime() : null;
+    const endTs = endVal ? new Date(`${endVal}T23:59:59.999`).getTime() : null;
+
+    const list = state.analysis.filter(ph => {
+      if (filters.brands.size && !filters.brands.has(ph.brandId)) return false;
+      if (filters.promoters.size && !filters.promoters.has(ph.promoterId)) return false;
+      if (filters.general.size && !filters.general.has(ph.result.status)) return false;
+      if (filters.products.size && !(ph.result.matches || []).some(d => filters.products.has(d.productId))) return false;
+      if (startTs !== null && (ph.ts || 0) < startTs) return false;
+      if (endTs !== null && (ph.ts || 0) > endTs) return false;
+      return true;
+    });
+
+    $('analysisEmpty').hidden = list.length > 0;
+
+    $('analysisList').innerHTML = list.map(ph => {
+      const brand = getBrand(ph.brandId);
+      const promoter = getPromoter(ph.promoterId);
+      const res = ph.result;
+      const pillClass = res.ok ? 'ok' : (res.status === 'low_quality' ? 'warn' : 'no');
+      const noteClass = pillClass;
+
+      return `<article class="card">
+        <div class="card-img-wrap">
+          <img src="${esc(ph.dataUrl)}" alt="">
+        </div>
+        <div class="card-body">
+          <div class="card-top">
+            <span class="card-brand">${esc(brand?.name || '—')}</span>
+            <span class="pill ${pillClass}">${esc(res.label)}</span>
+          </div>
+          <div class="card-meta">${esc(promoter?.name || '—')} · ${esc(ph.store)} · ${esc(ph.date)}</div>
+          <div class="ai-note ${noteClass}">${esc(res.note)}</div>
+          ${res.reason
+            ? `<div class="reason-box"><strong>Motivo da desaprovação</strong>${esc(res.reason)}</div>`
+            : ''}
+          ${res.matches.length
+            ? `<div class="det-head">Produtos encontrados</div>
+               <ul class="det-list">${res.matches.map(d => {
+                 const prd = getProduct(d.productId);
+                 const isMatch = filters.products.has(d.productId);
+                 return `<li class="det-row ${isMatch ? 'match' : ''}">
+                   <div class="det-row-top">
+                     <span class="det-name">${esc(prd?.name || d.productId)}</span>
+                     <span class="det-prob">${d.score}%</span>
+                   </div>
+                   <div class="det-bar"><i style="width:${d.score}%"></i></div>
+                 </li>`;
+               }).join('')}</ul>`
+            : ''}
+          <div class="card-foot">
+            ${res.ok
+              ? `<button type="button" class="btn" data-toggle-status="${ph.id}">Desaprovar</button>`
+              : `<button type="button" class="btn-soft" data-toggle-status="${ph.id}">Aprovar</button>`}
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+  }
+
+  $('dateStart').addEventListener('change', renderAnalysis);
+  $('dateEnd').addEventListener('change', renderAnalysis);
+
+  /* Aprovar (sem comentário) / Desaprovar (recado obrigatório) */
+  function openDisapproveModal(id) {
+    pendingDisapproveId = id;
+    $('disapproveReasonInput').value = '';
+    $('disapproveReasonModal').hidden = false;
+    $('disapproveReasonInput').focus();
+  }
+
+  function closeDisapproveModal() {
+    pendingDisapproveId = null;
+    $('disapproveReasonModal').hidden = true;
+  }
+
+  $('closeReasonModal').addEventListener('click', closeDisapproveModal);
+  $('cancelReasonModal').addEventListener('click', closeDisapproveModal);
+  $('disapproveReasonModal').addEventListener('click', e => {
+    if (e.target === $('disapproveReasonModal')) closeDisapproveModal();
+  });
+
+  $('disapproveReasonForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const reason = $('disapproveReasonInput').value.trim();
+    if (!reason) {
+      toast('É obrigatório deixar um recado.');
+      return;
+    }
+    const item = getAnalysis(pendingDisapproveId);
+    if (!item) return;
+    item.manualOverride = 'disapproved';
+    item.disapproveReason = reason;
+    item.result = evaluateAnalysis(item, state.products);
+    save();
+    closeDisapproveModal();
+    renderAnalysis();
+    renderPromoters();
+    toast('Foto marcada como desaprovada.');
+  });
+
+  $('analysisList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-toggle-status]');
+    if (!btn) return;
+    const item = getAnalysis(btn.dataset.toggleStatus);
+    if (!item) return;
+
+    if (item.result.ok) {
+      openDisapproveModal(item.id);
+    } else {
+      item.manualOverride = 'approved';
+      item.disapproveReason = '';
+      item.result = evaluateAnalysis(item, state.products);
+      save();
+      renderAnalysis();
+      renderPromoters();
+      toast('Foto aprovada.');
+    }
+  });
+
+  $('clearFilters').addEventListener('click', () => {
+    filters.brands.clear();
+    filters.products.clear();
+    filters.general.clear();
+    filters.promoters.clear();
+    $('dateStart').value = '';
+    $('dateEnd').value = '';
+    renderAllCombos();
+    renderAnalysis();
+  });
+
+  /* Modal Nova Análise + Alerta de Foto Desaprovada */
+  $('openNewAnalysis').addEventListener('click', () => {
+    $('anaBrand').innerHTML = state.brands.map(b => `<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
+    $('anaPromoter').innerHTML = state.promoters.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+    $('anaStore').value = state.promoters[0]?.store || '';
+    $('anaScenario').value = 'found';
+    $('anaFile').value = '';
+    $('analysisModal').hidden = false;
+  });
+
+  $('anaPromoter').addEventListener('change', () => {
+    const pr = getPromoter($('anaPromoter').value);
+    if (pr) $('anaStore').value = pr.store;
+  });
+
+  function closeModal() {
+    $('analysisModal').hidden = true;
+  }
+  $('closeModal').addEventListener('click', closeModal);
+  $('cancelModal').addEventListener('click', closeModal);
+  $('analysisModal').addEventListener('click', e => { if (e.target === $('analysisModal')) closeModal(); });
+
+  function saveAnalysisEntry(entry) {
+    state.analysis.unshift(entry);
+    save();
+    renderAnalysis();
+    renderPromoters();
+    switchView('analysis');
+    toast(`Análise registrada: ${entry.result.label}.`);
+  }
+
+  $('newAnalysisForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const brandId = $('anaBrand').value;
+    const promoterId = $('anaPromoter').value;
+    const store = $('anaStore').value.trim() || 'PDV';
+    const scenario = $('anaScenario').value;
+    const file = $('anaFile').files[0];
+
+    const brandProducts = state.products.filter(p => p.brandId === brandId);
+    let detections = [];
+    let issue = null;
+
+    if (scenario === 'found' && brandProducts.length > 0) {
+      const shuffled = [...brandProducts].sort(() => Math.random() - 0.5);
+      const count = Math.min(shuffled.length, Math.random() > 0.45 ? 2 : 1);
+      detections = shuffled.slice(0, count).map((p, idx) => ({
+        productId: p.id,
+        score: idx === 0 ? Math.floor(82 + Math.random() * 15) : Math.floor(60 + Math.random() * 20)
+      })).sort((a, b) => b.score - a.score);
+    } else if (scenario === 'wrong_brand') {
+      issue = 'wrong_brand';
+    } else {
+      issue = 'low_quality';
+    }
+
+    let dataUrl;
+    if (file) {
+      try { dataUrl = await readFile(file); }
+      catch (err) { return toast(err.message); }
+    } else if (scenario === 'found') {
+      dataUrl = gondolaScene('found', '#2563eb');
+    } else if (scenario === 'wrong_brand') {
+      dataUrl = art.gondolaMarcaErrada;
+    } else {
+      dataUrl = art.gondolaMaQualidade;
+    }
+
+    const ts = Date.now();
+    const entry = {
+      id: uid('ana'),
+      dataUrl,
+      brandId,
+      promoterId,
+      store,
+      ts,
+      date: formatDateTime(ts),
+      issue,
+      detections
+    };
+    entry.result = evaluateAnalysis(entry, state.products);
+
+    closeModal();
+
+    if (!entry.result.ok) {
+      pendingAlertEntry = entry;
+      $('alertModalImg').src = entry.dataUrl;
+      $('alertModalReason').textContent = entry.result.note;
+      $('disapprovedAlertModal').hidden = false;
+    } else {
+      saveAnalysisEntry(entry);
+    }
+  });
+
+  $('alertCancelBtn').addEventListener('click', () => {
+    pendingAlertEntry = null;
+    $('disapprovedAlertModal').hidden = true;
+    toast('Envio cancelado.');
+  });
+
+  $('alertForceSendBtn').addEventListener('click', () => {
+    if (!pendingAlertEntry) return;
+    const entry = pendingAlertEntry;
+    pendingAlertEntry = null;
+    $('disapprovedAlertModal').hidden = true;
+    saveAnalysisEntry(entry);
+  });
+
+  /* Promotores */
+  function promoterRate(id) {
+    const photos = state.analysis.filter(p => p.promoterId === id);
+    const ok = photos.filter(p => p.result.ok).length;
+    return { total: photos.length, ok, rate: photos.length ? Math.round((ok / photos.length) * 100) : 0 };
+  }
+
+  function renderPromoters() {
+    const min = Number($('rateMin').value);
+    const max = Number($('rateMax').value);
+    const rows = state.promoters
+      .map(p => ({ p, stats: promoterRate(p.id) }))
+      .filter(({ p, stats }) => {
+        if (filters.promoterNames.size && !filters.promoterNames.has(p.id)) return false;
+        return stats.rate >= min && stats.rate <= max;
+      })
+      .sort((a, b) => b.stats.rate - a.stats.rate);
+
+    $('promoterEmpty').hidden = rows.length > 0;
+    $('promoterList').innerHTML = rows.map(({ p, stats }) => `
+      <article class="prom-card">
+        <div class="prom-head">
+          <span class="avatar">${esc(p.name.slice(0, 1).toUpperCase())}</span>
+          <div class="grow">
+            <span class="title">${esc(p.name)}</span>
+            <span class="sub">${esc(p.store)}</span>
+          </div>
+          <span class="pill ${stats.rate >= 70 ? 'ok' : 'no'}">${stats.rate}%</span>
+        </div>
+        <div class="prom-bar"><i style="width:${stats.rate}%"></i></div>
+        <div class="prom-foot">
+          <span>Taxa de aprovação</span>
+          <button type="button" class="btn-soft" data-see-promoter="${p.id}">Ver fotos →</button>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function syncRange(source) {
+    const minEl = $('rateMin');
+    const maxEl = $('rateMax');
+    if (Number(minEl.value) > Number(maxEl.value)) {
+      if (source === 'min') maxEl.value = minEl.value;
+      else minEl.value = maxEl.value;
+    }
+    $('rateMinValue').textContent = `${minEl.value}%`;
+    $('rateMaxValue').textContent = `${maxEl.value}%`;
+    [minEl, maxEl].forEach(el => {
+      el.style.background = `linear-gradient(90deg, var(--accent) ${el.value}%, #e2e8f0 ${el.value}%)`;
+    });
+    renderPromoters();
+  }
+
+  $('rateMin').addEventListener('input', () => syncRange('min'));
+  $('rateMax').addEventListener('input', () => syncRange('max'));
+
+  $('promoterList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-see-promoter]');
+    if (!btn) return;
+    filters.brands.clear();
+    filters.products.clear();
+    filters.general.clear();
+    filters.promoters = new Set([btn.dataset.seePromoter]);
+    switchView('analysis');
+  });
+
+  $('clearPromoterFilters').addEventListener('click', () => {
+    filters.promoterNames.clear();
+    $('rateMin').value = 0;
+    $('rateMax').value = 100;
+    syncRange();
+    renderAllCombos();
+  });
+
+  // Inicialização
+  renderAllCombos();
+  renderCatalog();
+  renderAnalysis();
+  syncRange();
+</script>
+</body>
+</html>
